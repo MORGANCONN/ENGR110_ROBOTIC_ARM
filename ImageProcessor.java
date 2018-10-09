@@ -112,6 +112,7 @@ public class ImageProcessor{
                     image[row][col] = scan.nextInt();
                 }
             }
+            scan.close();
             displayImage();
         }
         catch(IOException e){}
