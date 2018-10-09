@@ -9,7 +9,7 @@ public class ImageProcessor{
     private int[][] image;
 
     private double colourMultiplier = 1;
-    private int colourDepth      = 255;
+    private int colourDepth         = 255;
 
     private int cannyThreshold1 = 170;
     private int cannyThreshold2 = 150;
