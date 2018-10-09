@@ -73,7 +73,7 @@ public class ImageProcessor{
         return ans;
     }
 
-    // Saves image as greyScale PPM-style txt file
+    // Saves image as greyScale PPM file
     public void saveAsPPM(){
         try{
             PrintWriter out = new PrintWriter(UI.askString("File name")+".ppm");
@@ -93,7 +93,7 @@ public class ImageProcessor{
         catch(IOException e){}
     }
 
-    // Loads image from txt file
+    // Loads image from greyscale PPM//PGMT file
     public void loadFromPPM(){
         try{
             Scanner scan = new Scanner(new File(UIFileChooser.open()));
