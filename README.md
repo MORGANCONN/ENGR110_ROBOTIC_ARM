@@ -1,5 +1,3 @@
-Uncomfortably_Dumb
+Edge finding algorithm working
 
-no u
-
-no u^2
+Canny not implemented yet
