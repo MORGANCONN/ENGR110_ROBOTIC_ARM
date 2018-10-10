@@ -122,7 +122,7 @@ public class ImageProcessor{
         gausBlur();
         sobelKernal();
         displayImage();
-//        canny();
+//        hysteresis();
     }
 
     // Applies a gaussian blur to the image
@@ -189,8 +189,8 @@ public class ImageProcessor{
         image = imageEdges;
     }
 
-    // Applies canny algorithm
-    public void canny(){
+    // Applies hysteresis algorithm
+    public void hysteresis(){
         for(int row = 1; row < image.length-1; row++){
             for(int col = 1; col < image[row].length; col++){
 
