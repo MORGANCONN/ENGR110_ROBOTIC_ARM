@@ -83,8 +83,9 @@ public class ImageProcessor{
             out.println(colourDepth);
             for(int i = 0; i<image.length; i++){
                 for(int n = 0; n<image[0].length; n++){
-                    out.println(image[i][n]);
+                    out.print(image[i][n] + " ");
                 }
+                out.print("\n");
             }
             out.flush();
             out.close();
