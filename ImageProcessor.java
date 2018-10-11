@@ -7,12 +7,13 @@ import java.awt.image.BufferedImage;
 
 public class ImageProcessor{
     private int[][] image;
+    private int[][] edgeDirection;
 
     private double colourMultiplier = 1;
-    private int colourDepth         = 255;
+    private int    colourDepth      = 255;
 
-    private int cannyThreshold1 = 170;
-    private int cannyThreshold2 = 150;
+    private int threshold1 = 170;
+    private int threshold2 = 150;
 
     private final int pixelSize = 1;  // the size of the pixels as drawn on screen
 
@@ -23,7 +24,6 @@ public class ImageProcessor{
 
     public void setupGui(){
         UI.initialise();
-        UI.setDivider(0);
         UI.addButton("Load image",     this::loadImage );
         UI.addButton("Save to ppm",    this::saveAsPPM);
         UI.addButton("Load ppm",       this::loadFromPPM);
@@ -119,10 +119,13 @@ public class ImageProcessor{
     }
 
     public void edgeDetection(){
+        if(image == null){return;}
+        threshold1 = UI.askInt("Threshold 1: ");
+        threshold2 = UI.askInt("Threshold 2: ");
         gausBlur();
         sobelKernal();
+        nonMaxSuppress();
         displayImage();
-//        nonMaxSuppress();
     }
 
     // Applies a gaussian blur to the image
@@ -151,6 +154,7 @@ public class ImageProcessor{
     public void sobelKernal(){
         double max = 0;
         int[][] imageEdges = new int[image.length][image[0].length];
+        edgeDirection      = new int[image.length][image[0].length];
 
         int[][] sobalMaskVertical = new int[3][3];
         sobalMaskVertical[0][0] = -1;  sobalMaskVertical[0][1] = 0;  sobalMaskVertical[0][2] = 1;
@@ -175,11 +179,32 @@ public class ImageProcessor{
                 //combine values
                 int value = (int)(Math.sqrt((Math.pow(vert,2) + (Math.pow(horz,2)))));
                 imageEdges[row][col] = value;
+
+                //find the maximum colour value of the image
                 if(value > max){
                     max = value;
                 }
+
+                //find the angle of the line
+                double angle = Math.abs((Math.atan2(vert,horz)/3.14159) * 180.0);
+                //make approximate
+                if(angle<22.5 || angle>157.5){
+                    angle = 0;
+                }
+                else if(angle<67.5){
+                    angle = 45;
+                }
+                else if(angle<112.5){
+                    angle = 90;
+                }
+                else{
+                    angle = 135;
+                }
+//                System.out.println((int)angle);
+                edgeDirection[row][col] = (int)angle;		// Store the approximate edge direction of each pixel in one array
             }
         }
+        //scale every pixel's brightness by the maximum brightness
         double scale = 255/max;
         for(int row = 0; row < imageEdges.length; row++){
             for(int col = 0; col < imageEdges[row].length; col++){
@@ -189,11 +214,63 @@ public class ImageProcessor{
         image = imageEdges;
     }
 
-    // Non-maximum suppresion
     public void nonMaxSuppress(){
         for(int row = 1; row < image.length-1; row++){
-            for(int col = 1; col < image[row].length; col++){
+            for(int col = 1; col < image[0].length-1; col++){
+                if (image[row][col] > threshold1){
+                    int[] shift = new int[2];
+                        int[] location = new int[2];
+                        location[0] = row; location[1] = col;
+                        if(edgeDirection[row][col] == 0){
+                            shift[0] = 1; shift[1] = 0;
+                            suppress(shift, location);
+                        }
+                        else if(edgeDirection[row][col] == 45){
+                            shift[0] = 1; shift[1] = 1;
+                            suppress(shift, location);
+                        }
+                        else if(edgeDirection[row][col] == 90){
+                            shift[0] = 0; shift[1] = 1;
+                            suppress(shift, location);
+                        }
+                        else if(edgeDirection[row][col] == 135){
+                            shift[0] = 1; shift[1] = -1;
+                            suppress(shift, location);
+                    }
+                }
+                else{
+                    image[row][col] = 0;
+                }
+            }
+        }
+    }
 
+    public void suppress(int[] shift, int[]location){
+        boolean keepGoingPos = true;
+        boolean keepGoingNeg = true;
+        int[] posLocation = new int[2];
+        int[] negLocation = new int[2];
+
+        posLocation[0] = location[0]+shift[0];  posLocation[1] = location[1]+shift[1];
+        negLocation[0] = location[0]-shift[0];  negLocation[1] = location[1]-shift[1];
+        if(posLocation[0] < image.length || posLocation[0] > image.length || posLocation[1] < image[0].length || posLocation[1] > image[0].length){
+            keepGoingPos = false;
+        }
+        if(negLocation[0] < image.length || negLocation[0] > image.length || negLocation[1] < image[0].length || negLocation[1] > image[0].length){
+            keepGoingNeg = false;
+        }
+        while(keepGoingPos && image[posLocation[0]][posLocation[1]] > threshold2){
+            image[posLocation[0]][posLocation[1]] = 0;
+            posLocation[0] = location[0]+shift[0];  posLocation[1] = location[1]+shift[1];
+            if(posLocation[0] < image.length || posLocation[0] > image.length || posLocation[1] < image[0].length || posLocation[1] > image[0].length){
+                keepGoingPos = false;
+            }
+        }
+        while(keepGoingNeg && image[negLocation[0]][negLocation[1]] > threshold2){
+            image[negLocation[0]][negLocation[1]] = 0;
+            negLocation[0] = location[0]-shift[0];  negLocation[1] = location[1]-shift[1];
+            if(negLocation[0] < image.length || negLocation[0] > image.length || negLocation[1] < image[0].length || negLocation[1] > image[0].length){
+                keepGoingNeg = false;
             }
         }
     }
