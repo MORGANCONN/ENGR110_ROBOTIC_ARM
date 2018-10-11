@@ -75,6 +75,7 @@ public class ImageProcessor{
 
     // Saves image as greyScale PPM file
     public void saveAsPPM(){
+        if(image == null) return;
         try{
             PrintWriter out = new PrintWriter(UI.askString("File name")+".ppm");
             out.println("P2");
@@ -119,6 +120,8 @@ public class ImageProcessor{
         catch(IOException e){}
     }
 
+
+    
     public void edgeDetection(){
         if(image == null){return;}
         threshold1 = UI.askInt("Threshold 1: ");
@@ -215,65 +218,44 @@ public class ImageProcessor{
         image = imageEdges;
     }
 
+    // Suppresses the dim pixels which are next to an edge, makes the edge 1 pixel wide
     public void nonMaxSuppress(){
+        int[][] imageEdges = new int[image.length][image[0].length];
         for(int row = 1; row < image.length-1; row++){
             for(int col = 1; col < image[0].length-1; col++){
                 if (image[row][col] > threshold1){
-                    int[] shift = new int[2];
-                        int[] location = new int[2];
-                        location[0] = row; location[1] = col;
-                        if(edgeDirection[row][col] == 0){
-                            shift[0] = 1; shift[1] = 0;
-                            suppress(shift, location);
+                    if(edgeDirection[row][col] == 0){
+                        for(int i = 0; i < 2; i++){
+                            if (image[row+1][col]<image[row][col] && image[row-1][col]<image[row][col]){
+                                imageEdges[row][col] = image[row][col];
+                            }
                         }
-                        else if(edgeDirection[row][col] == 45){
-                            shift[0] = 1; shift[1] = 1;
-                            suppress(shift, location);
+                    }
+                    else if(edgeDirection[row][col] == 45){
+                        for(int i = 0; i < 2; i++){
+                            if (image[row+1][col+1]<image[row][col] && image[row-1][col-1]<image[row][col]){
+                                imageEdges[row][col] = image[row][col];
+                            }
                         }
-                        else if(edgeDirection[row][col] == 90){
-                            shift[0] = 0; shift[1] = 1;
-                            suppress(shift, location);
+                    }
+                    else if(edgeDirection[row][col] == 90){
+                        for(int i = 0; i < 2; i++){
+                            if (image[row][col+1]<image[row][col] && image[row][col-1]<image[row][col]){
+                                imageEdges[row][col] = image[row][col];
+                            }
                         }
-                        else if(edgeDirection[row][col] == 135){
-                            shift[0] = 1; shift[1] = -1;
-                            suppress(shift, location);
+                    }
+                    else if(edgeDirection[row][col] == 135){
+                        for(int i = 0; i < 2; i++){
+                            if (image[row-1][col+1]<image[row][col] && image[row+1][col-1]<image[row][col]){
+                                imageEdges[row][col] = image[row][col];
+                            }
+                        }
                     }
                 }
-                else{
-                    image[row][col] = 0;
-                }
             }
         }
-    }
-
-    public void suppress(int[] shift, int[]location){
-        boolean keepGoingPos = true;
-        boolean keepGoingNeg = true;
-        int[] posLocation = new int[2];
-        int[] negLocation = new int[2];
-
-        posLocation[0] = location[0]+shift[0];  posLocation[1] = location[1]+shift[1];
-        negLocation[0] = location[0]-shift[0];  negLocation[1] = location[1]-shift[1];
-        if(posLocation[0] < image.length || posLocation[0] > image.length || posLocation[1] < image[0].length || posLocation[1] > image[0].length){
-            keepGoingPos = false;
-        }
-        if(negLocation[0] < image.length || negLocation[0] > image.length || negLocation[1] < image[0].length || negLocation[1] > image[0].length){
-            keepGoingNeg = false;
-        }
-        while(keepGoingPos && image[posLocation[0]][posLocation[1]] > threshold2){
-            image[posLocation[0]][posLocation[1]] = 0;
-            posLocation[0] = location[0]+shift[0];  posLocation[1] = location[1]+shift[1];
-            if(posLocation[0] < image.length || posLocation[0] > image.length || posLocation[1] < image[0].length || posLocation[1] > image[0].length){
-                keepGoingPos = false;
-            }
-        }
-        while(keepGoingNeg && image[negLocation[0]][negLocation[1]] > threshold2){
-            image[negLocation[0]][negLocation[1]] = 0;
-            negLocation[0] = location[0]-shift[0];  negLocation[1] = location[1]-shift[1];
-            if(negLocation[0] < image.length || negLocation[0] > image.length || negLocation[1] < image[0].length || negLocation[1] > image[0].length){
-                keepGoingNeg = false;
-            }
-        }
+        image = imageEdges;
     }
 
     // Main
