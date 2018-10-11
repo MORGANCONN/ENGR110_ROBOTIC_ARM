@@ -1,3 +1,24 @@
+/** important values
+
+positions at 1500, 1500
+
+x/y of pen = 330, 278
+
+x/y of left joint = 146, 315
+
+x/y of right joint = 497, 344
+
+x/y of left motor 257, 476
+
+x/y if right motor 370, 477
+
+motor angles change = 0.1 degree per unit of motor movement
+1 degree = 10 units
+
+**/
+
+//Variables
+
 int Array[][] //passes in x and y values
 
 xt && yt //last postion of the pen
