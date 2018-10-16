@@ -257,7 +257,7 @@ public class ImageProcessor{
         }
         image = imageEdges;
     }
-    
+
     public void doubleThreshold(){
         for(int row = 0; row < image.length; row++) {
             for (int col = 0; col < image[0].length; col++) {
@@ -316,12 +316,12 @@ public class ImageProcessor{
     }
 
     public void traceEdge(int[] shift, int[] location){
-        location[0] += shift[0]; location[1] += shift[0];
+        location[0] += shift[0]; location[1] += shift[1];
         if(image[location[0]][location[1]] == 255){return;}
         while(edgeDirection[location[0]][location[1]] == edgeDirection[location[0]-shift[0]][location[1]-shift[1]] && image[location[0]][location[1]] == 127){
             image[location[0]][location[1]] = 255;
-            location[0] += shift[0]; location[1] += shift[0];
             if(location[0] > image.length || location[0] < 0 || location[1] > image[0].length || location[1] < 0){return;}
+            location[0] += shift[0]; location[1] += shift[0];
         }
     }
 
