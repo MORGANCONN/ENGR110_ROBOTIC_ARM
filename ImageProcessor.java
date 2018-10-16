@@ -121,7 +121,7 @@ public class ImageProcessor{
     }
 
 
-    
+
     public void edgeDetection(){
         if(image == null){return;}
         threshold1 = UI.askInt("Threshold 1: ");
@@ -129,7 +129,9 @@ public class ImageProcessor{
         gausBlur();
         sobelKernal();
         nonMaxSuppress();
+        doubleThreshold();
         displayImage();
+        UI.println("done");
     }
 
     // Applies a gaussian blur to the image
@@ -223,39 +225,104 @@ public class ImageProcessor{
         int[][] imageEdges = new int[image.length][image[0].length];
         for(int row = 1; row < image.length-1; row++){
             for(int col = 1; col < image[0].length-1; col++){
-                if (image[row][col] > threshold1){
-                    if(edgeDirection[row][col] == 0){
-                        for(int i = 0; i < 2; i++){
-                            if (image[row+1][col]<image[row][col] && image[row-1][col]<image[row][col]){
-                                imageEdges[row][col] = image[row][col];
-                            }
+                if(edgeDirection[row][col] == 0){
+                    for(int i = 0; i < 2; i++){
+                        if (image[row+1][col]<image[row][col] && image[row-1][col]<image[row][col]){
+                            imageEdges[row][col] = image[row][col];
                         }
                     }
-                    else if(edgeDirection[row][col] == 45){
-                        for(int i = 0; i < 2; i++){
-                            if (image[row+1][col+1]<image[row][col] && image[row-1][col-1]<image[row][col]){
-                                imageEdges[row][col] = image[row][col];
-                            }
+                }
+                else if(edgeDirection[row][col] == 45){
+                    for(int i = 0; i < 2; i++){
+                        if (image[row+1][col+1]<image[row][col] && image[row-1][col-1]<image[row][col]){
+                            imageEdges[row][col] = image[row][col];
                         }
                     }
-                    else if(edgeDirection[row][col] == 90){
-                        for(int i = 0; i < 2; i++){
-                            if (image[row][col+1]<image[row][col] && image[row][col-1]<image[row][col]){
-                                imageEdges[row][col] = image[row][col];
-                            }
+                }
+                else if(edgeDirection[row][col] == 90){
+                    for(int i = 0; i < 2; i++){
+                        if (image[row][col+1]<image[row][col] && image[row][col-1]<image[row][col]){
+                            imageEdges[row][col] = image[row][col];
                         }
                     }
-                    else if(edgeDirection[row][col] == 135){
-                        for(int i = 0; i < 2; i++){
-                            if (image[row-1][col+1]<image[row][col] && image[row+1][col-1]<image[row][col]){
-                                imageEdges[row][col] = image[row][col];
-                            }
+                }
+                else if(edgeDirection[row][col] == 135){
+                    for(int i = 0; i < 2; i++){
+                        if (image[row-1][col+1]<image[row][col] && image[row+1][col-1]<image[row][col]){
+                            imageEdges[row][col] = image[row][col];
                         }
                     }
                 }
             }
         }
         image = imageEdges;
+    }
+    
+    public void doubleThreshold(){
+        for(int row = 0; row < image.length; row++) {
+            for (int col = 0; col < image[0].length; col++) {
+                if(image[row][col] > threshold1){
+                    image[row][col] = 255;
+                }
+                else if(image[row][col] > threshold2){
+                    image[row][col] = 127;
+                }
+                else{
+                    image[row][col] = 0;
+                }
+            }
+        }
+        for(int row = 1; row < image.length-1; row++){
+            for(int col = 1; col < image[0].length-1; col++){
+                if (image[row][col] == 255){
+                    int[] shift = new int[2];
+                    int[] location = new int[2];
+                    location[0] = row; location[1] = col;
+                    if(edgeDirection[row][col] == 0){
+                        shift[0] = 1; shift[1] = 0;
+                        traceEdge(shift, location);
+                        shift[0] = -1; shift[1] = 0;
+                        traceEdge(shift, location);
+                    }
+                    else if(edgeDirection[row][col] == 45){
+                        shift[0] = 1; shift[1] = 1;
+                        traceEdge(shift, location);
+                        shift[0] = -1; shift[1] = -1;
+                        traceEdge(shift, location);
+                    }
+                    else if(edgeDirection[row][col] == 90){
+                        shift[0] = 0; shift[1] = 1;
+                        traceEdge(shift, location);
+                        shift[0] = 0; shift[1] = -1;
+                        traceEdge(shift, location);
+                    }
+                    else if(edgeDirection[row][col] == 135){
+                        shift[0] = 1; shift[1] = -1;
+                        traceEdge(shift, location);
+                        shift[0] = -1; shift[1] = 1;
+                        traceEdge(shift, location);
+                    }
+                }
+            }
+        }
+//        image = imageEdges;
+        for(int row = 0; row < image.length; row++) {
+            for (int col = 0; col < image[0].length; col++) {
+                if(image[row][col] == 127) {
+                    image[row][col] = 0;
+                }
+            }
+        }
+    }
+
+    public void traceEdge(int[] shift, int[] location){
+        location[0] += shift[0]; location[1] += shift[0];
+        if(image[location[0]][location[1]] == 255){return;}
+        while(edgeDirection[location[0]][location[1]] == edgeDirection[location[0]-shift[0]][location[1]-shift[1]] && image[location[0]][location[1]] == 127){
+            image[location[0]][location[1]] = 255;
+            location[0] += shift[0]; location[1] += shift[0];
+            if(location[0] > image.length || location[0] < 0 || location[1] > image[0].length || location[1] < 0){return;}
+        }
     }
 
     // Main
