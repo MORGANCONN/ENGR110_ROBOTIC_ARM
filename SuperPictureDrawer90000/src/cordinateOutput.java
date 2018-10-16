@@ -1,6 +1,7 @@
-import ecs100.*;
 import java.awt.*;
+import ecs100.*;
 import java.util.*;
+
 
 public class cordinateOutput {
     private ArrayList<Double> cordinates = new ArrayList<Double>();
@@ -37,6 +38,9 @@ public class cordinateOutput {
         cordinates.add((centerX + -30 * Math.cos(Math.toRadians(i))));
             cordinates.add((centerY + -30 * Math.sin(Math.toRadians(i))));
         }
+    }
+    public void squareGen(){
+
     }
 
 
