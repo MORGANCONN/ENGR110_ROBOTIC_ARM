@@ -8,6 +8,10 @@ import java.awt.image.BufferedImage;
 public class ImageProcessor{
     private int[][] image;
     private int[][] edgeDirection;
+    private boolean[][] lineComplete;
+
+    private ArrayList<Integer> lineStart;
+    private ArrayList<Integer> lineEnd;
 
     private double colourMultiplier = 1;
     private int    colourDepth      = 255;
@@ -28,6 +32,7 @@ public class ImageProcessor{
         UI.addButton("Save to ppm",    this::saveAsPPM);
         UI.addButton("Load ppm",       this::loadFromPPM);
         UI.addButton("Edge detection", this::edgeDetection);
+        UI.addButton("Save line coords", this::saveCoords);
         UI.addButton("Quit", UI::quit );
     }
 
@@ -54,6 +59,7 @@ public class ImageProcessor{
         this.image = this.loadAnImage(UIFileChooser.open());
         this.displayImage();
     }
+
 
     // Load an image and convert it to greyscale
     public int[][] loadAnImage(String imageName) {
@@ -120,7 +126,25 @@ public class ImageProcessor{
         catch(IOException e){}
     }
 
-
+    public void saveCoords(){
+        if(image == null){return;}
+        try {
+            PrintStream outStart = new PrintStream(new File("lineStart.txt"));
+            PrintStream outEnd = new PrintStream(new File("lineEnd.txt"));
+            for (int i = 0; i < lineStart.size() - 1; i += 2) {
+                outStart.println(lineStart.get(i));
+                outStart.println(lineStart.get(i + 1));
+                outEnd.println(lineEnd.get(i));
+                outEnd.println(lineEnd.get(i + 1));
+            }
+            outStart.flush();
+            outEnd.flush();
+            outStart.close();
+            outEnd.close();
+            UI.println("Done saving");
+        }
+        catch(IOException e){}
+    }
 
     public void edgeDetection(){
         if(image == null){return;}
@@ -259,6 +283,10 @@ public class ImageProcessor{
     }
 
     public void doubleThreshold(){
+        lineStart = new ArrayList<Integer>();
+        lineEnd   = new ArrayList<Integer>();
+        lineComplete = new boolean[image.length][image[0].length];
+
         for(int row = 0; row < image.length; row++) {
             for (int col = 0; col < image[0].length; col++) {
                 if(image[row][col] > threshold1){
@@ -274,38 +302,48 @@ public class ImageProcessor{
         }
         for(int row = 1; row < image.length-1; row++){
             for(int col = 1; col < image[0].length-1; col++){
-                if (image[row][col] == 255){
+                if (image[row][col] == 255 && !lineComplete[row][col]){
                     int[] shift = new int[2];
                     int[] location = new int[2];
+                    int[] tempStart = new int[2];
+                    int[] tempEnd = new int[2];
                     location[0] = row; location[1] = col;
                     if(edgeDirection[row][col] == 0){
                         shift[0] = 1; shift[1] = 0;
-                        traceEdge(shift, location);
+                        tempStart = traceEdge(shift, location);
                         shift[0] = -1; shift[1] = 0;
-                        traceEdge(shift, location);
+                        tempEnd = traceEdge(shift, location);
                     }
                     else if(edgeDirection[row][col] == 45){
                         shift[0] = 1; shift[1] = 1;
-                        traceEdge(shift, location);
+                        tempStart = traceEdge(shift, location);
                         shift[0] = -1; shift[1] = -1;
-                        traceEdge(shift, location);
+                        tempEnd = traceEdge(shift, location);
                     }
                     else if(edgeDirection[row][col] == 90){
                         shift[0] = 0; shift[1] = 1;
-                        traceEdge(shift, location);
+                        tempStart = traceEdge(shift, location);
                         shift[0] = 0; shift[1] = -1;
-                        traceEdge(shift, location);
+                        tempEnd = traceEdge(shift, location);
                     }
                     else if(edgeDirection[row][col] == 135){
                         shift[0] = 1; shift[1] = -1;
-                        traceEdge(shift, location);
+                        tempStart = traceEdge(shift, location);
                         shift[0] = -1; shift[1] = 1;
-                        traceEdge(shift, location);
+                        tempEnd = traceEdge(shift, location);
+                    }
+                    lineStart.add(tempStart[0]); lineStart.add(tempStart[1]);
+                    lineEnd.add(tempEnd[0]);     lineEnd.add(tempEnd[1]);
+                    lineComplete[tempStart[0]][tempStart[1]] = true;
+                    System.out.println(tempStart[0] + " " + tempStart[1]);
+                    System.out.println(tempEnd[0] + " " + tempEnd[1]);
+                    while(tempStart != tempEnd){
+                        tempStart[0] += shift[0]; tempStart[1] += shift[1];
+                        lineComplete[tempStart[0]][tempStart[1]] = true;
                     }
                 }
             }
         }
-//        image = imageEdges;
         for(int row = 0; row < image.length; row++) {
             for (int col = 0; col < image[0].length; col++) {
                 if(image[row][col] == 127) {
@@ -315,14 +353,14 @@ public class ImageProcessor{
         }
     }
 
-    public void traceEdge(int[] shift, int[] location){
+    public int[] traceEdge(int[] shift, int[] location){
         location[0] += shift[0]; location[1] += shift[1];
-        if(image[location[0]][location[1]] == 255){return;}
-        while(edgeDirection[location[0]][location[1]] == edgeDirection[location[0]-shift[0]][location[1]-shift[1]] && image[location[0]][location[1]] == 127){
+        while(edgeDirection[location[0]][location[1]] == edgeDirection[location[0]-shift[0]][location[1]-shift[1]] && (image[location[0]][location[1]] == 127 || image[location[0]][location[1]] == 127)){
             image[location[0]][location[1]] = 255;
-            if(location[0] > image.length || location[0] < 0 || location[1] > image[0].length || location[1] < 0){return;}
-            location[0] += shift[0]; location[1] += shift[0];
+            if(location[0] + shift[0] > image.length || location[0] + shift[0] < 0 || location[1] + shift[1] > image[0].length || location[1] + shift[1] < 0){return location;}
+            location[0] += shift[0]; location[1] += shift[1];
         }
+        return location;
     }
 
     // Main
