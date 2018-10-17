@@ -335,8 +335,6 @@ public class ImageProcessor{
                     lineStart.add(tempStart[0]); lineStart.add(tempStart[1]);
                     lineEnd.add(tempEnd[0]);     lineEnd.add(tempEnd[1]);
                     lineComplete[tempStart[0]][tempStart[1]] = true;
-                    System.out.println(tempStart[0] + " " + tempStart[1]);
-                    System.out.println(tempEnd[0] + " " + tempEnd[1]);
                     while(tempStart != tempEnd){
                         tempStart[0] += shift[0]; tempStart[1] += shift[1];
                         lineComplete[tempStart[0]][tempStart[1]] = true;
