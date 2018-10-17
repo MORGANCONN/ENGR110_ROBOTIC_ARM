@@ -7,7 +7,6 @@ import java.awt.image.BufferedImage;
 
 public class ImageProcessor{
     private int[][] image;
-    private int[][] imageBackup;
     private int[][] edgeDirection;
 
     private double colourMultiplier = 1;
@@ -26,7 +25,6 @@ public class ImageProcessor{
     public void setupGui(){
         UI.initialise();
         UI.addButton("Load image",     this::loadImage );
-        UI.addButton("Retry",          this::retry);
         UI.addButton("Save to ppm",    this::saveAsPPM);
         UI.addButton("Load ppm",       this::loadFromPPM);
         UI.addButton("Edge detection", this::edgeDetection);
@@ -55,13 +53,6 @@ public class ImageProcessor{
         colourMultiplier = 1;
         this.image = this.loadAnImage(UIFileChooser.open());
         this.displayImage();
-        imageBackup = image;
-    }
-
-    //reloads the image so you can try different thresholds
-    public void retry(){
-        image = imageBackup;
-        displayImage();
     }
 
     // Load an image and convert it to greyscale
