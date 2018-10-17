@@ -128,6 +128,7 @@ public class ImageProcessor{
 
     public void saveCoords(){
         if(image == null){return;}
+        findCoords();
         try {
             PrintStream outStart = new PrintStream(new File("lineStart.txt"));
             PrintStream outEnd = new PrintStream(new File("lineEnd.txt"));
@@ -283,10 +284,6 @@ public class ImageProcessor{
     }
 
     public void doubleThreshold(){
-        lineStart = new ArrayList<Integer>();
-        lineEnd   = new ArrayList<Integer>();
-        lineComplete = new boolean[image.length][image[0].length];
-
         for(int row = 0; row < image.length; row++) {
             for (int col = 0; col < image[0].length; col++) {
                 if(image[row][col] > threshold1){
@@ -302,42 +299,39 @@ public class ImageProcessor{
         }
         for(int row = 1; row < image.length-1; row++){
             for(int col = 1; col < image[0].length-1; col++){
-                if (image[row][col] == 255 && !lineComplete[row][col]){
+                if (image[row][col] == 255) {
                     int[] shift = new int[2];
                     int[] location = new int[2];
-                    int[] tempStart = new int[2];
-                    int[] tempEnd = new int[2];
-                    location[0] = row; location[1] = col;
-                    if(edgeDirection[row][col] == 0){
-                        shift[0] = 1; shift[1] = 0;
-                        tempStart = traceEdge(shift, location);
-                        shift[0] = -1; shift[1] = 0;
-                        tempEnd = traceEdge(shift, location);
-                    }
-                    else if(edgeDirection[row][col] == 45){
-                        shift[0] = 1; shift[1] = 1;
-                        tempStart = traceEdge(shift, location);
-                        shift[0] = -1; shift[1] = -1;
-                        tempEnd = traceEdge(shift, location);
-                    }
-                    else if(edgeDirection[row][col] == 90){
-                        shift[0] = 0; shift[1] = 1;
-                        tempStart = traceEdge(shift, location);
-                        shift[0] = 0; shift[1] = -1;
-                        tempEnd = traceEdge(shift, location);
-                    }
-                    else if(edgeDirection[row][col] == 135){
-                        shift[0] = 1; shift[1] = -1;
-                        tempStart = traceEdge(shift, location);
-                        shift[0] = -1; shift[1] = 1;
-                        tempEnd = traceEdge(shift, location);
-                    }
-                    lineStart.add(tempStart[0]); lineStart.add(tempStart[1]);
-                    lineEnd.add(tempEnd[0]);     lineEnd.add(tempEnd[1]);
-                    lineComplete[tempStart[0]][tempStart[1]] = true;
-                    while(tempStart != tempEnd){
-                        tempStart[0] += shift[0]; tempStart[1] += shift[1];
-                        lineComplete[tempStart[0]][tempStart[1]] = true;
+                    location[0] = row;
+                    location[1] = col;
+                    if (edgeDirection[row][col] == 0) {
+                        shift[0] = 1;
+                        shift[1] = 0;
+                        traceEdge(shift, location);
+                        shift[0] = -1;
+                        shift[1] = 0;
+                        traceEdge(shift, location);
+                    } else if (edgeDirection[row][col] == 45) {
+                        shift[0] = 1;
+                        shift[1] = 1;
+                        traceEdge(shift, location);
+                        shift[0] = -1;
+                        shift[1] = -1;
+                        traceEdge(shift, location);
+                    } else if (edgeDirection[row][col] == 90) {
+                        shift[0] = 0;
+                        shift[1] = 1;
+                        traceEdge(shift, location);
+                        shift[0] = 0;
+                        shift[1] = -1;
+                        traceEdge(shift, location);
+                    } else if (edgeDirection[row][col] == 135) {
+                        shift[0] = 1;
+                        shift[1] = -1;
+                        traceEdge(shift, location);
+                        shift[0] = -1;
+                        shift[1] = 1;
+                        traceEdge(shift, location);
                     }
                 }
             }
@@ -351,13 +345,69 @@ public class ImageProcessor{
         }
     }
 
-    public int[] traceEdge(int[] shift, int[] location){
+    public void traceEdge(int[] shift, int[] location){
         location[0] += shift[0]; location[1] += shift[1];
         while(edgeDirection[location[0]][location[1]] == edgeDirection[location[0]-shift[0]][location[1]-shift[1]] && (image[location[0]][location[1]] == 127 || image[location[0]][location[1]] == 127)){
             image[location[0]][location[1]] = 255;
-            if(location[0] + shift[0] > image.length || location[0] + shift[0] < 0 || location[1] + shift[1] > image[0].length || location[1] + shift[1] < 0){return location;}
+            if(location[0] + shift[0] > image.length || location[0] + shift[0] < 0 || location[1] + shift[1] > image[0].length || location[1] + shift[1] < 0){return;}
             location[0] += shift[0]; location[1] += shift[1];
         }
+    }
+
+    public void findCoords(){
+        lineStart = new ArrayList<Integer>();
+        lineEnd   = new ArrayList<Integer>();
+        lineComplete = new boolean[image.length][image[0].length];
+
+        for(int row = 1; row < image.length-1; row++){
+            for(int col = 1; col < image[0].length-1; col++){
+                if(image[row][col] == 255 && !lineComplete[row][col]){
+                    int[] location = new int[2];
+                    int[] shift    = new int[2];
+                    int[] tempStart = new int[2];
+                    int[] tempEnd = new int[2];
+                    location[0] = row; location[1] = col;
+                    if(edgeDirection[row][col] == 0){
+                        shift[0] = 1; shift[1] = 0;
+                        tempStart = findEnds(shift, location);
+                        shift[0] = -1; shift[1] = 0;
+                        tempEnd = findEnds(shift, location);
+                    }
+                    else if(edgeDirection[row][col] == 45){
+                        shift[0] = 1; shift[1] = 1;
+                        tempStart = findEnds(shift, location);
+                        shift[0] = -1; shift[1] = -1;
+                        tempEnd = findEnds(shift, location);
+                    }
+                    else if(edgeDirection[row][col] == 90){
+                        shift[0] = 0; shift[1] = 1;
+                        tempStart = findEnds(shift, location);
+                        shift[0] = 0; shift[1] = -1;
+                        tempEnd = findEnds(shift, location);
+                    }
+                    else if(edgeDirection[row][col] == 135){
+                        shift[0] = 1; shift[1] = -1;
+                        tempStart = findEnds(shift, location);
+                        shift[0] = -1; shift[1] = 1;
+                        tempEnd = findEnds(shift, location);
+                    }
+                    lineStart.add(tempStart[0]);
+                    lineStart.add(tempStart[1]);
+                    lineEnd.add(tempEnd[0]);
+                    lineEnd.add(tempEnd[1]);
+                }
+            }
+        }
+    }
+
+    public int[] findEnds(int[] shift, int[] location){
+        lineComplete[location[0]][location[1]] = true;
+        location[0] += shift[0]; location[1] += shift[1];
+        while(edgeDirection[location[0]][location[1]] == edgeDirection[location[0]-shift[0]][location[1]-shift[1]] && location[0] < image.length-1 && location[0] > 0 && location[1] < image[0].length-1 && location[1] > 0){
+            lineComplete[location[0]][location[1]] = true;
+            location[0] += shift[0]; location[1] += shift[1];
+        }
+        location[0] -= shift[0]; location[1] -= shift[1];
         return location;
     }
 
