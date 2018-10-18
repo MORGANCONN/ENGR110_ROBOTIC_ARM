@@ -10,8 +10,9 @@ public class ImageProcessor{
     private int[][] edgeDirection;
     private boolean[][] lineComplete;
 
-    private ArrayList<Integer> lineStart;
-    private ArrayList<Integer> lineEnd;
+    private Arm arm1 = new Arm();
+
+    private ArrayList<Line> lines;
 
     private double colourMultiplier = 1;
     private int    colourDepth      = 255;
@@ -32,7 +33,7 @@ public class ImageProcessor{
         UI.addButton("Save to ppm",    this::saveAsPPM);
         UI.addButton("Load ppm",       this::loadFromPPM);
         UI.addButton("Edge detection", this::edgeDetection);
-        UI.addButton("Save line coords", this::saveCoords);
+        UI.addButton("Process signal", this::process);
         UI.addButton("Quit", UI::quit );
     }
 
@@ -126,25 +127,10 @@ public class ImageProcessor{
         catch(IOException e){}
     }
 
-    public void saveCoords(){
+    public void process(){
         if(image == null){return;}
         findCoords();
-        try {
-            PrintStream outStart = new PrintStream(new File("lineStart.txt"));
-            PrintStream outEnd = new PrintStream(new File("lineEnd.txt"));
-            for (int i = 0; i < lineStart.size() - 1; i += 2) {
-                outStart.println(lineStart.get(i));
-                outStart.println(lineStart.get(i + 1));
-                outEnd.println(lineEnd.get(i));
-                outEnd.println(lineEnd.get(i + 1));
-            }
-            outStart.flush();
-            outEnd.flush();
-            outStart.close();
-            outEnd.close();
-            UI.println("Done saving");
-        }
-        catch(IOException e){}
+        arm1.run(lines);
     }
 
     public void edgeDetection(){
@@ -355,8 +341,7 @@ public class ImageProcessor{
     }
 
     public void findCoords(){
-        lineStart = new ArrayList<Integer>();
-        lineEnd   = new ArrayList<Integer>();
+        lines = new ArrayList<Line>();
         lineComplete = new boolean[image.length][image[0].length];
 
         for(int row = 1; row < image.length-1; row++){
@@ -391,10 +376,7 @@ public class ImageProcessor{
                         shift[0] = -1; shift[1] = 1;
                         tempEnd = findEnds(shift, location);
                     }
-                    lineStart.add(tempStart[0]);
-                    lineStart.add(tempStart[1]);
-                    lineEnd.add(tempEnd[0]);
-                    lineEnd.add(tempEnd[1]);
+                    lines.add(new Line(tempStart[0], tempStart[1], tempEnd[0], tempEnd[1]));
                 }
             }
         }
@@ -414,6 +396,7 @@ public class ImageProcessor{
     // Main
     public static void main(String[] arguments){
         new ImageProcessor();
+        new Arm();
     }
 
 }
