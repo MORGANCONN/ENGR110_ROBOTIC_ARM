@@ -119,13 +119,16 @@ public class Arm {
 
     private double theta1 = 116; //Angle of motor 1
     private double theta2 = 46; //Angle of motor 2
-    /**
+        /**
     void run(points[] points){
         ArrayList<String> values = new ArrayList<String>();
         for (int i = 0; i < points.size(); i++){
-            double firstangle = process(true, points[i].getX, points[i].getY);
-            double secondangle = process(false, points[i].getX, points[i].getY); 
-            values.add(firstangle + "," + secondangle+ "," + "1400,");
+            double firstangle = process(true, points[i].getStartX, points[i].getStartY);
+            double secondangle = process(false, points[i].getStartX, points[i].getStartY); 
+            double thirdangle = process(false, points[i].getEndX, points[i].getEndY);
+            double fourthangle = process(true, points[i].getEndX, points[i].getEndY);
+            
+            values.add(firstangle + "," + secondangle+ "," + "1400," thirdangle + "," + fourthangle + "," + "1500");
         }
         output(values);
     }    
