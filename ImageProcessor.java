@@ -13,6 +13,8 @@ public class ImageProcessor{
     private Arm arm1 = new Arm();
 
     private ArrayList<Line> lines;
+    private ArrayList<Integer> pixel;
+    private ArrayList<Boolean> penDown;
 
     private double colourMultiplier = 1;
     private int    colourDepth      = 255;
@@ -129,8 +131,8 @@ public class ImageProcessor{
 
     public void process(){
         if(image == null){return;}
-        findCoords();
-        arm1.run(lines);
+        findLines();
+        arm1.run(pixel);
     }
 
     public void edgeDetection(){
@@ -383,14 +385,50 @@ public class ImageProcessor{
     }
 
     public int[] findEnds(int[] shift, int[] location){
+        System.out.println("test");
         lineComplete[location[0]][location[1]] = true;
         location[0] += shift[0]; location[1] += shift[1];
         while(edgeDirection[location[0]][location[1]] == edgeDirection[location[0]-shift[0]][location[1]-shift[1]] && location[0] < image.length-1 && location[0] > 0 && location[1] < image[0].length-1 && location[1] > 0){
             lineComplete[location[0]][location[1]] = true;
+            System.out.println("test2");
             location[0] += shift[0]; location[1] += shift[1];
         }
         location[0] -= shift[0]; location[1] -= shift[1];
         return location;
+    }
+
+    public void findLines() {
+        pixel = new ArrayList<>();
+        penDown = new ArrayList<>();
+        lineComplete = new boolean[image.length][image[0].length];
+
+        for(int row = 1; row < image.length-1; row++) {
+            for (int col = 1; col < image[0].length - 1; col++) {
+                if(image[row][col] ==  255){
+                    pixel.add(-1);
+                    pixel.add(-1);
+                    image[row][col] = 0;
+                    pixel.add(col);
+                    pixel.add(row);
+                    OffSet:
+                    for(int rowOffSet = -1; rowOffSet < 2; rowOffSet++){
+                        for(int colOffSet = -1; colOffSet < 2; rowOffSet++) {
+                            if (image[row + rowOffSet][col + colOffSet] == 255) {
+                                pixel.add(col + colOffSet);
+                                pixel.add(row + rowOffSet);
+                                row += rowOffSet;
+                                col += colOffSet;
+                                break OffSet;
+                            }
+                        }
+                    }
+                }
+                else{
+                    pixel.add(-2);
+                    pixel.add(-2);
+                }
+            }
+        }
     }
 
     // Main
