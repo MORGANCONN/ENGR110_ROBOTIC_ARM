@@ -12,7 +12,7 @@ public class ImageProcessor{
 
     private Arm arm1 = new Arm();
 
-    private ArrayList<Line> lines;
+    private ArrayList<Line> lines = new ArrayList<>();
     private ArrayList<Integer> pixel;
     private ArrayList<Boolean> penDown;
 
@@ -21,6 +21,9 @@ public class ImageProcessor{
 
     private int threshold1 = 170;
     private int threshold2 = 150;
+
+    private int startX;
+    private int startY;
 
     private final int pixelSize = 1;  // the size of the pixels as drawn on screen
 
@@ -36,6 +39,8 @@ public class ImageProcessor{
         UI.addButton("Load ppm",       this::loadFromPPM);
         UI.addButton("Edge detection", this::edgeDetection);
         UI.addButton("Process signal", this::process);
+        UI.addButton("Write from screen", this::processScreen);
+        UI.setMouseMotionListener( this::doMouse );
         UI.addButton("Quit", UI::quit );
     }
 
@@ -131,8 +136,19 @@ public class ImageProcessor{
 
     public void process(){
         if(image == null){return;}
-        findLines();
-        arm1.run(pixel);
+        findCoords();
+//        arm1.run(pixel);
+//        UI.println("test");
+        test();
+    }
+
+    public void test(){
+        UI.clearGraphics();
+        for(int i = 0; i < lines.size(); i++){
+            UI.setColor(Color.black);
+            UI.drawLine(lines.get(i).getStartX(), lines.get(i).getStartY(), lines.get(i).getEndX(), lines.get(i).getEndY());
+
+        }
     }
 
     public void edgeDetection(){
@@ -385,51 +401,31 @@ public class ImageProcessor{
     }
 
     public int[] findEnds(int[] shift, int[] location){
-        System.out.println("test");
         lineComplete[location[0]][location[1]] = true;
         location[0] += shift[0]; location[1] += shift[1];
         while(edgeDirection[location[0]][location[1]] == edgeDirection[location[0]-shift[0]][location[1]-shift[1]] && location[0] < image.length-1 && location[0] > 0 && location[1] < image[0].length-1 && location[1] > 0){
             lineComplete[location[0]][location[1]] = true;
-            System.out.println("test2");
             location[0] += shift[0]; location[1] += shift[1];
         }
         location[0] -= shift[0]; location[1] -= shift[1];
         return location;
     }
 
-    public void findLines() {
-        pixel = new ArrayList<>();
-        penDown = new ArrayList<>();
-        lineComplete = new boolean[image.length][image[0].length];
+   public void doMouse(String action, double x, double y){
+       if(action.equals("pressed")){
+           startX=(int)x;
+           startY=(int)y;
+       }
+       else if(action.equals("released")){
+           lines.add(new Line(startX, startY, (int)x, (int)y));
+           UI.drawLine(startX, startY, (int)x, (int)y);
+       }
+   }
 
-        for(int row = 1; row < image.length-1; row++) {
-            for (int col = 1; col < image[0].length - 1; col++) {
-                if(image[row][col] ==  255){
-                    pixel.add(-1);
-                    pixel.add(-1);
-                    image[row][col] = 0;
-                    pixel.add(col);
-                    pixel.add(row);
-                    OffSet:
-                    for(int rowOffSet = -1; rowOffSet < 2; rowOffSet++){
-                        for(int colOffSet = -1; colOffSet < 2; rowOffSet++) {
-                            if (image[row + rowOffSet][col + colOffSet] == 255) {
-                                pixel.add(col + colOffSet);
-                                pixel.add(row + rowOffSet);
-                                row += rowOffSet;
-                                col += colOffSet;
-                                break OffSet;
-                            }
-                        }
-                    }
-                }
-                else{
-                    pixel.add(-2);
-                    pixel.add(-2);
-                }
-            }
-        }
-    }
+   public void processScreen(){
+        arm1.run(lines);
+        UI.println("done");
+   }
 
     // Main
     public static void main(String[] arguments){
