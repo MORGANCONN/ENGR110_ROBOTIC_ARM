@@ -12,7 +12,7 @@ public class ImageProcessor{
 
     private Arm arm1 = new Arm();
 
-    private ArrayList<Line> lines;
+    private ArrayList<Line> lines = new ArrayList<>();
     private ArrayList<Integer> pixel;
     private ArrayList<Boolean> penDown;
 
@@ -21,6 +21,9 @@ public class ImageProcessor{
 
     private int threshold1 = 170;
     private int threshold2 = 150;
+
+    private int startX;
+    private int startY;
 
     private final int pixelSize = 1;  // the size of the pixels as drawn on screen
 
@@ -36,18 +39,9 @@ public class ImageProcessor{
         UI.addButton("Load ppm",       this::loadFromPPM);
         UI.addButton("Edge detection", this::edgeDetection);
         UI.addButton("Process signal", this::process);
-        UI.addButton("test", this::test);
-        
+        UI.addButton("Write from screen", this::processScreen);
+        UI.setMouseMotionListener( this::doMouse );
         UI.addButton("Quit", UI::quit );
-    }
-    
-    public void test(){
-        lines = new ArrayList<>();
-        lines.add(new Line( 100, 100, 200, 100));
-        lines.add(new Line( 200, 100, 200, 200));
-        lines.add(new Line( 200, 200, 100, 200));
-        lines.add(new Line( 100, 200, 100, 100));
-        arm1.run(lines);
     }
 
     // Display the image on the screen with each pixel as a square of size pixelSize.
@@ -143,8 +137,18 @@ public class ImageProcessor{
     public void process(){
         if(image == null){return;}
         findCoords();
-        UI.println("crimp is yeetless at coding");
-        arm1.run(lines);
+//        arm1.run(pixel);
+//        UI.println("test");
+        test();
+    }
+
+    public void test(){
+        UI.clearGraphics();
+        for(int i = 0; i < lines.size(); i++){
+            UI.setColor(Color.black);
+            UI.drawLine(lines.get(i).getStartX(), lines.get(i).getStartY(), lines.get(i).getEndX(), lines.get(i).getEndY());
+
+        }
     }
 
     public void edgeDetection(){
@@ -407,43 +411,21 @@ public class ImageProcessor{
         return location;
     }
 
-    public void findLines() {
-        pixel = new ArrayList<>();
-        penDown = new ArrayList<>();
-        lineComplete = new boolean[image.length][image[0].length];
+   public void doMouse(String action, double x, double y){
+       if(action.equals("pressed")){
+           startX=(int)x;
+           startY=(int)y;
+       }
+       else if(action.equals("released")){
+           lines.add(new Line(startX, startY, (int)x, (int)y));
+           UI.drawLine(startX, startY, (int)x, (int)y);
+       }
+   }
 
-        for(int row = 2; row < image.length - 2; row++) {
-            for (int col = 2; col < image[0].length - 2; col++) {
-                OffSet:
-                if(row < image.length && col< image[0].length&& row > 0 && col > 0){
-                if(image[row][col] ==  255){
-                    pixel.add(-1);
-                    pixel.add(-1);
-                    image[row][col] = 0;
-                    pixel.add(col);
-                    pixel.add(row);
-                    for(int rowOffSet = -1; rowOffSet < 2; rowOffSet++){
-                        for(int colOffSet = -1; colOffSet < 2; rowOffSet++) {
-                            if(row + rowOffSet < image.length && col + colOffSet < image[0].length&& row + rowOffSet > 0 && col + colOffSet > 0){
-                            if (image[row + rowOffSet][col + colOffSet] == 255) {
-                                pixel.add(col + colOffSet);
-                                pixel.add(row + rowOffSet);
-                                row += rowOffSet;
-                                col += colOffSet;
-                                break OffSet;
-                            }
-                        }
-                        }
-                    }
-                }
-                else{
-                    pixel.add(-2);
-                    pixel.add(-2);
-                }
-            }
-            }
-        }
-    }
+   public void processScreen(){
+        arm1.run(lines);
+        UI.println("done");
+   }
 
     // Main
     public static void main(String[] arguments){
