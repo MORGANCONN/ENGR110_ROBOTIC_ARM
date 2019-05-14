@@ -1,5 +1,1 @@
-Uncomfortably_Dumb
-
-no u
-
-no u^2
+Robotic Arm Project For Engr110
